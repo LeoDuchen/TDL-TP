@@ -7,6 +7,7 @@ type Match = {
   date: string;
   hour: string;
   players: string[];
+  maxPlayers: number;
 };
 
 function Matches() {
@@ -21,13 +22,48 @@ function Matches() {
     location: '',
     date: '',
     hour: '',
-    players: [storedCurrentName]
+    players: [storedCurrentName],
+    maxPlayers: 10
   });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [matchesPerPage, setMatchesPerPage] = useState(5);
+
+  const indexLastMatch = currentPage * matchesPerPage;
+  const indexFirstMatch = indexLastMatch - matchesPerPage;
+  const currentMatches = matches.slice(indexFirstMatch, indexLastMatch);
+  const totalPages = Math.ceil(matches.length / matchesPerPage);
+
+  function handlePageChange(pageNumber: number) {
+    setCurrentPage(pageNumber);
+    localStorage.setItem('currentPage', pageNumber.toString());
+  };
+
+  function handleMatchesPerPageChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const newValue = Number(e.target.value);
+    setMatchesPerPage(newValue);
+    setCurrentPage(1);
+    localStorage.setItem('matchesPerPage', newValue.toString());
+  };
 
   useEffect(() => {
     const storedMatches = JSON.parse(localStorage.getItem('matches') || '[]');
     setMatches(storedMatches);
+
+    const storedPerPage = localStorage.getItem('matchesPerPage');
+    if (storedPerPage) {
+      setMatchesPerPage(Number(storedPerPage));
+    }
+
+    const storedPage = localStorage.getItem('currentPage');
+    if (storedPage) {
+      setCurrentPage(Number(storedPage));
+    }
   }, []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [currentPage]);
 
   function handleCreateMatch(e: React.FormEvent) {
     e.preventDefault();
@@ -38,7 +74,15 @@ function Matches() {
       const updatedMatches = [...matches, matchToSave];
       setMatches(updatedMatches);
       localStorage.setItem('matches', JSON.stringify(updatedMatches));
-      setNewMatch({ id: 0, createdBy: '', location: '', date: '', hour: '', players: [] });
+      setNewMatch({
+        id: 0,
+        createdBy: storedCurrentName,
+        location: '',
+        date: '',
+        hour: '',
+        players: [storedCurrentName],
+        maxPlayers: 10
+      });
       setIsCreating(false);
     }
   };
@@ -47,13 +91,13 @@ function Matches() {
     const { name, value } = e.target;
     setNewMatch((prev) => ({
       ...prev,
-      [name]: value
+      [name]: name === "maxPlayers" ? Number(value) : value
     }));
   };
 
   function handleJoinMatch(matchId: number) {
     const updatedMatches = matches.map(match => {
-      if ((match.id === matchId) && (!match.players.includes(storedCurrentName))) {
+      if ((match.id === matchId) && (!match.players.includes(storedCurrentName)) && (match.players.length < match.maxPlayers)) {
         return {
           ...match,
           players: [...match.players, storedCurrentName]
@@ -86,7 +130,7 @@ function Matches() {
     <div style={{ backgroundColor: '#e3e4e5', minHeight: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
       <h1>Partidos Disponibles</h1>
 
-      <button style={{ ...inputStyle, marginBottom: '20px' }} onClick={() => setIsCreating(prev => !prev)}>
+      <button style={{ ...inputStyle, marginBottom: '20px' }} onClick={() => setIsCreating(isCreating ? false : true)}>
         Crear partido
       </button>
 
@@ -126,6 +170,19 @@ function Matches() {
                 style={inputStyle}
               />
             </div>
+            <div>
+              <input
+                type="number"
+                name="maxPlayers"
+                value={newMatch.maxPlayers}
+                onChange={handleInputChange}
+                min={10}
+                max={22}
+                step={2}
+                required
+                style={inputStyle}
+              />
+            </div>
             <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
               <button type="submit" style={inputStyle}>
                 Crear
@@ -140,18 +197,46 @@ function Matches() {
 
       {matches.length === 0 && <p>No hay partidos disponibles.</p>}
 
-      {matches.map((match) => (
+      {currentMatches.map((match) => (
         <div key={match.id} style={cardStyle}>
           <p><strong>Publicado por:</strong> {match.createdBy}</p>
           <p><strong>Ubicación:</strong> {match.location}</p>
           <p><strong>Fecha:</strong> {match.date}</p>
           <p><strong>Hora:</strong> {match.hour}</p>
-          <p><strong>Jugadores:</strong> {match.players.length} / 10</p>
+          <p><strong>Jugadores:</strong> {match.players.length} / {match.maxPlayers}</p>
           <button style={inputStyle} onClick={() => handleJoinMatch(match.id)}>
             Unirme
           </button>
         </div>
       ))}
+
+      <div style={{ marginTop: '10px' }}>
+        <select onChange={handleMatchesPerPageChange} value={matchesPerPage} style={inputStyle}>
+          <option value={5}>Mostrar 5 partidos</option>
+          <option value={10}>Mostrar 10 partidos</option>
+          <option value={20}>Mostrar 20 partidos</option>
+        </select>
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px' }}>
+        {currentPage > 1 && (
+          <button onClick={() => handlePageChange(currentPage - 1)} style={inputStyle}>
+            Anterior
+          </button>
+        )}
+
+        {Array.from({ length: totalPages }, (_, i) => (
+          <button key={i + 1} onClick={() => handlePageChange(i + 1)} style={{ ...inputStyle, backgroundColor: currentPage === i + 1 ? '#cccccc' : 'white', width: '40px' }}>
+            {i + 1}
+          </button>
+        ))}
+
+        {(indexLastMatch < matches.length) && (
+          <button onClick={() => handlePageChange(currentPage + 1)} style={inputStyle}>
+            Siguiente
+          </button>
+        )}
+      </div>
     </div>
   );
 }
