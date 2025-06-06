@@ -4,6 +4,7 @@ type Match = {
   id: number;
   createdBy: string;
   location: string;
+  description: string;
   date: string;
   hour: string;
   players: string[];
@@ -20,11 +21,14 @@ function Matches() {
     id: 0,
     createdBy: storedCurrentName,
     location: '',
+    description: '',
     date: '',
     hour: '',
     players: [storedCurrentName],
     maxPlayers: 10
   });
+
+  const [error, setError] = useState<{ [matchId: number]: string }>({});
 
   const [currentPage, setCurrentPage] = useState(1);
   const [matchesPerPage, setMatchesPerPage] = useState(5);
@@ -78,6 +82,7 @@ function Matches() {
         id: 0,
         createdBy: storedCurrentName,
         location: '',
+        description: '',
         date: '',
         hour: '',
         players: [storedCurrentName],
@@ -96,6 +101,26 @@ function Matches() {
   };
 
   function handleJoinMatch(matchId: number) {
+    const match = matches.find(m => m.id === matchId);
+
+    if (!match) {
+      return;
+    }
+
+    const newError: { [matchId: number]: string } = {};
+
+    if (match.players.includes(storedCurrentName)) {
+      newError[matchId] = 'Ya estás anotado en este partido.';
+      setError(newError);
+      return;
+    }
+
+    if (match.players.length >= match.maxPlayers) {
+      newError[matchId] = 'El partido está lleno.';
+      setError(newError);
+      return;
+    }
+
     const updatedMatches = matches.map(match => {
       if ((match.id === matchId) && (!match.players.includes(storedCurrentName)) && (match.players.length < match.maxPlayers)) {
         return {
@@ -108,6 +133,12 @@ function Matches() {
 
     setMatches(updatedMatches);
     localStorage.setItem('matches', JSON.stringify(updatedMatches));
+
+    setError(prev => {
+    const newErrors = { ...prev };
+      delete newErrors[matchId];
+      return newErrors;
+    });
   };
 
   const cardStyle = {
@@ -141,9 +172,20 @@ function Matches() {
             <div>
               <input
                 type="text"
-                placeholder="Ubicación"
+                placeholder="Dirección"
                 name="location"
                 value={newMatch.location}
+                onChange={handleInputChange}
+                required
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <input
+                type="text"
+                placeholder="Descripción del partido"
+                name="description"
+                value={newMatch.description}
                 onChange={handleInputChange}
                 required
                 style={inputStyle}
@@ -200,13 +242,27 @@ function Matches() {
       {currentMatches.map((match) => (
         <div key={match.id} style={cardStyle}>
           <p><strong>Publicado por:</strong> {match.createdBy}</p>
-          <p><strong>Ubicación:</strong> {match.location}</p>
+          <p><strong>Dirección:</strong> {match.location}</p>
+          <p><strong>Descripción:</strong> {match.description}</p>
           <p><strong>Fecha:</strong> {match.date}</p>
           <p><strong>Hora:</strong> {match.hour}</p>
           <p><strong>Jugadores:</strong> {match.players.length} / {match.maxPlayers}</p>
-          <button style={inputStyle} onClick={() => handleJoinMatch(match.id)}>
+          <div style={{ textAlign: 'left'}}>
+            <strong>Anotados:</strong>
+            <ul style={{ paddingLeft: '15px', margin: '5px' }}>
+              {match.players.map((player, index) => (
+                <li key={index}>{player}</li>
+              ))}
+            </ul>
+          </div>
+          <button style={{ ...inputStyle, backgroundColor: '#efefef' }} onClick={() => handleJoinMatch(match.id)}>
             Unirme
           </button>
+          {error[match.id] && (
+            <div style={{ color: 'red', marginTop: '5px' }}>
+              {error[match.id]}
+            </div>
+          )}
         </div>
       ))}
 
