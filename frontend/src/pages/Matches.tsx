@@ -51,8 +51,8 @@ function Matches() {
   };
 
   useEffect(() => {
-    const storedMatches = JSON.parse(localStorage.getItem('matches') || '[]');
-    setMatches(storedMatches);
+    //const storedMatches = JSON.parse(localStorage.getItem('matches') || '[]');
+    //setMatches(storedMatches);
 
     const storedPerPage = localStorage.getItem('matchesPerPage');
     if (storedPerPage) {
@@ -71,26 +71,49 @@ function Matches() {
 
   function handleCreateMatch(e: React.FormEvent) {
     e.preventDefault();
-    
+
     if (newMatch.location && newMatch.date && newMatch.hour) {
-      const newId = Math.max(0, ...matches.map(m => m.id)) + 1;
-      const matchToSave = { ...newMatch, id: newId };
-      const updatedMatches = [...matches, matchToSave];
-      setMatches(updatedMatches);
-      localStorage.setItem('matches', JSON.stringify(updatedMatches));
-      setNewMatch({
-        id: 0,
-        createdBy: storedCurrentName,
-        location: '',
-        description: '',
-        date: '',
-        hour: '',
-        players: [storedCurrentName],
-        maxPlayers: 10
-      });
-      setIsCreating(false);
+      fetch('http://localhost:3001/matches', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newMatch)
+      })
+        .then(res => res.json())
+        .then(createdMatch => {
+          setMatches(prevMatches => [...prevMatches, createdMatch]);
+          setNewMatch({
+            id: 0,
+            createdBy: storedCurrentName,
+            location: '',
+            description: '',
+            date: '',
+            hour: '',
+            players: [storedCurrentName],
+            maxPlayers: 10
+          });
+          setIsCreating(false);
+        })
+        .catch(error => {
+          console.error('Error al crear el partido:', error);
+        });
     }
-  };
+  }
+
+  useEffect(() => {
+    fetch('http://localhost:3001/matches')
+      .then(res => res.json())
+      .then(data => {
+        console.log('Partidos desde el backend:', data);
+        const updatedMatches = data.map((match: any) => ({
+          ...match,
+          players: Array.isArray(match.players) ? match.players : JSON.parse(match.players || '[]')
+        }));
+        setMatches(updatedMatches);
+      })
+      .catch(err => console.error('Error al obtener los partidos:', err));
+  }, []);
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -121,18 +144,34 @@ function Matches() {
       return;
     }
 
-    const updatedMatches = matches.map(match => {
-      if ((match.id === matchId) && (!match.players.includes(storedCurrentName)) && (match.players.length < match.maxPlayers)) {
-        return {
-          ...match,
-          players: [...match.players, storedCurrentName]
-        };
-      }
-      return match;
-    });
+    fetch(`http://localhost:3001/matches/${matchId}/join`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ playerName: storedCurrentName })
+    })
+      .then(res => {
+        if (!res.ok) {
+          return res.text().then(msg => { throw new Error(msg); });
+        }
+        return res.json();
+      })
+      .then(updatedMatch => {
+        const updatedMatches = matches.map(m => (m.id === matchId ? updatedMatch : m));
+        setMatches(updatedMatches);
+        setError(prev => {
+          const newErrors = { ...prev };
+          delete newErrors[matchId];
+          return newErrors;
+        });
+      })
+      .catch(err => {
+        console.error('Error al unirse al partido:', err.message);
+      });
 
-    setMatches(updatedMatches);
-    localStorage.setItem('matches', JSON.stringify(updatedMatches));
+    //setMatches(updatedMatches);
+    //localStorage.setItem('matches', JSON.stringify(updatedMatches));
 
     setError(prev => {
     const newErrors = { ...prev };
