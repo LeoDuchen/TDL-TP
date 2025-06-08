@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(cors());
 
 const dbPromise = open({
-  filename: './database.db',
+  filename: './src/database.db',
   driver: sqlite3.Database
 });
 
@@ -88,40 +88,6 @@ app.post('/matches/:id/join', async (req: Request, res: Response) => {
   await db.run('UPDATE matches SET players = ? WHERE id = ?', [JSON.stringify(players), matchId]);
 
   return res.status(200).json({ ...match, players });
-});
-
-app.put('/matches/:id', async (req: Request, res: Response) => {
-  const matchId = parseInt(req.params.id);
-  const { location, description, date, hour, maxPlayers } = req.body;
-
-  const db = await dbPromise;
-
-  const match = await db.get('SELECT * FROM matches WHERE id = ?', [matchId]);
-
-  if (match) {
-    await db.run('UPDATE matches SET location = ?, description = ?, date = ?, hour = ?, maxPlayers = ? WHERE id = ?',
-      [location, description, date, hour, maxPlayers, matchId]);
-      
-    res.json({ ...match, location, description, date, hour, maxPlayers });
-  } else {
-    res.status(404).send('Partido no encontrado.');
-  }
-});
-
-// Sin funcionamiento, hay que agregar la funcionalidad de eliminar partidos creados en el frontend primero.
-app.delete('/matches/:id', async (req: Request, res: Response) => {
-  const matchId = parseInt(req.params.id);
-
-  const db = await dbPromise;
-
-  const match = await db.get('SELECT * FROM matches WHERE id = ?', [matchId]);
-
-  if (match) {
-    await db.run('DELETE FROM matches WHERE id = ?', [matchId]);
-    res.status(204).send();
-  } else {
-    res.status(404).send('Partido no encontrado.');
-  }
 });
 
 app.listen(port, () => {
