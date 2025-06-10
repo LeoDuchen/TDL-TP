@@ -7,12 +7,13 @@ type Match = {
   description: string;
   date: string;
   hour: string;
-  players: string[];
+   players: { username: string; name: string }[];
   maxPlayers: number;
 };
 
 function Matches() {
   const storedCurrentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  const storedCurrentUsername = storedCurrentUser?.username || 'defaultUsername';
   const storedCurrentName = storedCurrentUser?.name || 'defaultUser';
 
   const [matches, setMatches] = useState<Match[]>([]);
@@ -24,7 +25,7 @@ function Matches() {
     description: '',
     date: '',
     hour: '',
-    players: [storedCurrentName],
+    players: [{ username: storedCurrentUsername, name: storedCurrentName }],
     maxPlayers: 10
   });
 
@@ -90,7 +91,7 @@ function Matches() {
             description: '',
             date: '',
             hour: '',
-            players: [storedCurrentName],
+            players: [{ username: storedCurrentUsername, name: storedCurrentName }],
             maxPlayers: 10
           });
           setIsCreating(false);
@@ -108,7 +109,7 @@ function Matches() {
         console.log('Partidos desde el backend:', data);
         const updatedMatches = data.map((match: any) => ({
           ...match,
-          players: Array.isArray(match.players) ? match.players : JSON.parse(match.players || '[]')
+          players: JSON.parse(match.players || '[]')
         }));
         setMatches(updatedMatches);
       })
@@ -132,7 +133,7 @@ function Matches() {
 
     const newError: { [matchId: number]: string } = {};
 
-    if (match.players.includes(storedCurrentName)) {
+    if (match.players.some(p => p.username === storedCurrentUsername)) {
       newError[matchId] = 'Ya estás anotado en este partido.';
       setError(newError);
       return;
@@ -149,7 +150,7 @@ function Matches() {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ playerName: storedCurrentName })
+      body: JSON.stringify({ playerUsername: storedCurrentUser.username, playerName: storedCurrentName })
     })
       .then(res => {
         if (!res.ok) {
@@ -290,7 +291,7 @@ function Matches() {
             <strong>Anotados:</strong>
             <ul style={{ paddingLeft: '15px', margin: '5px' }}>
               {match.players.map((player, index) => (
-                <li key={index}>{player}</li>
+                <li key={index}>{player.name}</li>
               ))}
             </ul>
           </div>

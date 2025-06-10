@@ -63,7 +63,7 @@ app.post('/matches', async (req: Request, res: Response) => {
 
 app.post('/matches/:id/join', async (req: Request, res: Response) => {
   const matchId = parseInt(req.params.id);
-  const { playerName } = req.body;
+  const { playerUsername, playerName } = req.body;
 
   const db = await dbPromise;
 
@@ -73,9 +73,9 @@ app.post('/matches/:id/join', async (req: Request, res: Response) => {
     return res.status(404).send('Partido no encontrado.');
   }
 
-  const players = JSON.parse(match.players);
+  const players = JSON.parse(match.players || '[]') as { username: string, name: string }[];
 
-  if (players.includes(playerName)) {
+  if (players.some(p => p.username === playerUsername)) {
     return res.status(400).send('El usuario ya está anotado.');
   }
 
@@ -83,7 +83,7 @@ app.post('/matches/:id/join', async (req: Request, res: Response) => {
     return res.status(400).send('El partido está lleno.');
   }
 
-  players.push(playerName);
+  players.push({ username: playerUsername, name: playerName });
 
   await db.run('UPDATE matches SET players = ? WHERE id = ?', [JSON.stringify(players), matchId]);
 
