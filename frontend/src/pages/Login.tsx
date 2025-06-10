@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 type User = {
+  id: number;
   name: string;
   lastName: string;
   username: string;
@@ -11,8 +12,8 @@ type User = {
 
 // Usuarios hardcodeados, borrar después.
 const hardcodedUsers: User[] = [
-  { name: 'Pepe', lastName: 'Juan', username: 'pepe', password: '123', email: 'pepe@gmail.com' },
-  { name: 'Nombre', lastName: 'Apellido', username: 'usuario', password: 'contraseña', email: 'usuario@contraseña'}
+  { id: 1, name: 'Pepe', lastName: 'Juan', username: 'pepe', password: '123', email: 'pepe@gmail.com' },
+  { id: 2, name: 'Nombre', lastName: 'Apellido', username: 'usuario', password: 'contraseña', email: 'usuario@contraseña'}
 ];
 
 function Login() {

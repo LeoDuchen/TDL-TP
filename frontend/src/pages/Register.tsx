@@ -11,6 +11,7 @@ function Register() {
   const navigate = useNavigate();
 
   interface User {
+    id: number;
     name: string;
     lastName: string;
     username: string;
@@ -22,7 +23,7 @@ function Register() {
     e.preventDefault();
 
     if (name && lastName && username && password && email) {
-      const newUser: User = { name, lastName, username, password, email };
+      const newUser: User = { id: 0, name, lastName, username, password, email };
 
       let savedUsers = JSON.parse(localStorage.getItem('users') || '[]');
 
