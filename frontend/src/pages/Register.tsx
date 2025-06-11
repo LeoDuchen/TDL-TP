@@ -10,37 +10,35 @@ function Register() {
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
 
-  interface User {
-    id: number;
-    name: string;
-    lastName: string;
-    username: string;
-    password: string;
-    email: string;
-  }
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (name && lastName && username && password && email) {
-      const newUser: User = { id: 0, name, lastName, username, password, email };
-
-      let savedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-
-      if (savedUsers.some((user: User) => (user.username === username))) {
-        setError('Nombre de usuario ya está en uso.');
-      } else if (savedUsers.some((user: User) => (user.email === email))) {
-        setError('Email ya está en uso.');
-      } else {
-        savedUsers.push(newUser);
-        localStorage.setItem('users', JSON.stringify(savedUsers));
-
-        navigate('/');
-      }
-    } else {
+    if ((!name) || (!lastName) || (!username) || (!password) || (!email)) {
       setError('Falta completar todos los campos.');
+      return;
     }
-  };
+
+    fetch('http://localhost:3001/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, lastName, username, password, email }),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const data = await response.json();
+          setError(data.error || 'Error al registrar.');
+          throw new Error(data.error || 'Error al registrar.');
+        }
+        return response.json();
+      })
+      .then(() => {
+        navigate('/');
+      })
+      .catch((error) => {
+        console.error('Error de conexión:', error.message);
+        setError((error.message) || ('Error al conectar con el servidor.'));
+      });
+  }
 
   function handleBack() {
     navigate('/');

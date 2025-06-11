@@ -73,7 +73,7 @@ function Matches() {
   function handleCreateMatch(e: React.FormEvent) {
     e.preventDefault();
 
-    if (newMatch.location && newMatch.date && newMatch.hour) {
+    if ((newMatch.location) && (newMatch.date) && (newMatch.hour)) {
       fetch('http://localhost:3001/matches', {
         method: 'POST',
         headers: {
@@ -97,7 +97,11 @@ function Matches() {
           setIsCreating(false);
         })
         .catch(error => {
-          console.error('Error al crear el partido:', error);
+          console.error('Error al crear el partido:', error.message);
+          setError(prev => ({
+            ...prev,
+            createMatch: (error.message) || ('Error desconocido al crear el partido.')
+          }));
         });
     }
   }
@@ -113,7 +117,13 @@ function Matches() {
         }));
         setMatches(updatedMatches);
       })
-      .catch(err => console.error('Error al obtener los partidos:', err));
+      .catch(error => {
+        console.error('Error al obtener los partidos:', error.message);
+        setError(prev => ({
+          ...prev,
+          fetchMatches: (error.message) || ('Error desconocido al cargar los partidos.')
+        }));
+      });
   }, []);
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -134,7 +144,7 @@ function Matches() {
     const newError: { [matchId: number]: string } = {};
 
     if (match.players.some(p => p.username === storedCurrentUsername)) {
-      newError[matchId] = 'Ya estás anotado en este partido.';
+      newError[matchId] = 'Ya estás anotado en este partido.'; 
       setError(newError);
       return;
     }
@@ -167,19 +177,14 @@ function Matches() {
           return newErrors;
         });
       })
-      .catch(err => {
-        console.error('Error al unirse al partido:', err.message);
+      .catch(error => {
+        console.error('Error al unire al partido:', error.message);
+        setError(prev => ({
+          ...prev,
+          joinMatch: (error.message) || ('Error desconocido al unirse al partido.')
+        }));
       });
-
-    //setMatches(updatedMatches);
-    //localStorage.setItem('matches', JSON.stringify(updatedMatches));
-
-    setError(prev => {
-    const newErrors = { ...prev };
-      delete newErrors[matchId];
-      return newErrors;
-    });
-  };
+  }
 
   const cardStyle = {
     backgroundColor: '#ffffff',

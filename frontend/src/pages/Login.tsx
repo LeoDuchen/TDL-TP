@@ -1,21 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-type User = {
-  id: number;
-  name: string;
-  lastName: string;
-  username: string;
-  password: string;
-  email: string;
-};
-
-// Usuarios hardcodeados, borrar después.
-const hardcodedUsers: User[] = [
-  { id: 1, name: 'Pepe', lastName: 'Juan', username: 'pepe', password: '123', email: 'pepe@gmail.com' },
-  { id: 2, name: 'Nombre', lastName: 'Apellido', username: 'usuario', password: 'contraseña', email: 'usuario@contraseña'}
-];
-
 function Login() {
   const [username, setUsername] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -25,20 +10,35 @@ function Login() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const storedUsers: User[] = JSON.parse(localStorage.getItem('users') || '[]');
-
-    const allUsers = [...hardcodedUsers, ...storedUsers]; // Usuarios hardcodeados, borrar después.
-
-    //const user = storedUsers.find((user) => (user.username === username) && (user.password === password));
-    const user = allUsers.find((user) => (user.username === username) && (user.password === password)); // Borrar y reemplazar por primer línea.
-
-    if (user) {
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      navigate('/matches');
-    } else {
-      setError('Usuario o contraseña incorrectos.');
+    if ((!username) || (!password)) {
+      setError('Falta completar todos los campos.');
+      return;
     }
-  };
+
+    fetch('http://localhost:3001/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, password }),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const data = await response.json();
+          setError(data.error || 'Error al iniciar sesión.');
+          throw new Error(data.error || 'Error al iniciar sesión.');
+        }
+        return response.json();
+      })
+      .then((data) => {
+        localStorage.setItem('currentUser', JSON.stringify(data.user));
+        navigate('/matches');
+      })
+      .catch((error) => {
+        console.error('Error de conexión:', error.message);
+        setError((error.message) || ('Error al conectar con el servidor.'));
+      });
+  }
 
   function handleBack() {
     navigate('/');
