@@ -7,25 +7,24 @@ type Match = {
   description: string;
   date: string;
   hour: string;
-   players: { username: string; name: string }[];
+  players: number[];
   maxPlayers: number;
 };
 
 function Matches() {
   const storedCurrentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-  const storedCurrentUsername = storedCurrentUser?.username || 'defaultUsername';
-  const storedCurrentName = storedCurrentUser?.name || 'defaultUser';
 
+  const [users, setUsers] = useState<{ id: number; username: string; name: string }[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [newMatch, setNewMatch] = useState<Match>({
     id: 0,
-    createdBy: storedCurrentName,
+    createdBy: storedCurrentUser.id,
     location: '',
     description: '',
     date: '',
     hour: '',
-    players: [{ username: storedCurrentUsername, name: storedCurrentName }],
+    players: [storedCurrentUser.id],
     maxPlayers: 10
   });
 
@@ -50,6 +49,21 @@ function Matches() {
     setCurrentPage(1);
     localStorage.setItem('matchesPerPage', newValue.toString());
   };
+
+  useEffect(() => {
+    fetch('http://localhost:3001/users')
+      .then(res => res.json())
+      .then(usersData => {
+        setUsers(usersData);
+      })
+      .catch(error => {
+        console.error('Error al obtener los usuarios:', error.message);
+        setError(prev => ({
+          ...prev,
+          fetchUsers: (error.message) || ('Error desconocido al cargar los usuarios.')
+        }));
+      });
+  }, []);
 
   useEffect(() => {
     //const storedMatches = JSON.parse(localStorage.getItem('matches') || '[]');
@@ -86,12 +100,12 @@ function Matches() {
           setMatches(prevMatches => [...prevMatches, createdMatch]);
           setNewMatch({
             id: 0,
-            createdBy: storedCurrentName,
+            createdBy: storedCurrentUser.id,
             location: '',
             description: '',
             date: '',
             hour: '',
-            players: [{ username: storedCurrentUsername, name: storedCurrentName }],
+            players: [storedCurrentUser.id],
             maxPlayers: 10
           });
           setIsCreating(false);
@@ -109,13 +123,9 @@ function Matches() {
   useEffect(() => {
     fetch('http://localhost:3001/matches')
       .then(res => res.json())
-      .then(data => {
-        console.log('Partidos desde el backend:', data);
-        const updatedMatches = data.map((match: any) => ({
-          ...match,
-          players: JSON.parse(match.players || '[]')
-        }));
-        setMatches(updatedMatches);
+      .then(matches => {
+        console.log('Partidos desde el backend:', matches);
+        setMatches(matches);
       })
       .catch(error => {
         console.error('Error al obtener los partidos:', error.message);
@@ -143,7 +153,7 @@ function Matches() {
 
     const newError: { [matchId: number]: string } = {};
 
-    if (match.players.some(p => p.username === storedCurrentUsername)) {
+    if (match.players.includes(storedCurrentUser.id)) {
       newError[matchId] = 'Ya estás anotado en este partido.'; 
       setError(newError);
       return;
@@ -160,7 +170,7 @@ function Matches() {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ playerUsername: storedCurrentUser.username, playerName: storedCurrentName })
+      body: JSON.stringify({ userId: storedCurrentUser.id })
     })
       .then(res => {
         if (!res.ok) {
@@ -286,7 +296,7 @@ function Matches() {
 
       {currentMatches.map((match) => (
         <div key={match.id} style={cardStyle}>
-          <p><strong>Publicado por:</strong> {match.createdBy}</p>
+          <p><strong>Publicado por:</strong> {users.find(u => u.id === Number(match.createdBy))?.name || 'Usuario desconocido'}</p>
           <p><strong>Dirección:</strong> {match.location}</p>
           <p><strong>Descripción:</strong> {match.description}</p>
           <p><strong>Fecha:</strong> {match.date}</p>
@@ -295,9 +305,14 @@ function Matches() {
           <div style={{ textAlign: 'left'}}>
             <strong>Anotados:</strong>
             <ul style={{ paddingLeft: '15px', margin: '5px' }}>
-              {match.players.map((player, index) => (
-                <li key={index}>{player.name}</li>
-              ))}
+              {match.players.map((playerId) => {
+                const user = users.find(u => u.id === Number(playerId));
+                return (
+                  <li key={playerId}>
+                    {user ? user.name : 'Jugador desconocido.'}
+                  </li>
+                );
+              })}
             </ul>
           </div>
           <button style={{ ...inputStyle, backgroundColor: '#efefef' }} onClick={() => handleJoinMatch(match.id)}>
