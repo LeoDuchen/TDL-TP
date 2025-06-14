@@ -25,8 +25,8 @@ function Login() {
       .then(async (response) => {
         if (!response.ok) {
           const data = await response.json();
-          setError(data.error || 'Error al iniciar sesión.');
-          throw new Error(data.error || 'Error al iniciar sesión.');
+          setError((data.error) || ('Error al iniciar sesión.'));
+          throw new Error((data.error) || ('Error al iniciar sesión.'));
         }
         return response.json();
       })

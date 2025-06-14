@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 type Match = {
   id: number;
-  createdBy: string;
+  createdBy: number;
   location: string;
   description: string;
   date: string;

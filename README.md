@@ -14,10 +14,11 @@ npm -v
 Instalar dependencias:
 
 ```bash
-npm install
+npm install --save-dev concurrently
+npm run install-all
 ```
 
-Para correr el frontend y el backend (en diferentes terminales):
+Para correr:
 
 ```bash
 npm run dev

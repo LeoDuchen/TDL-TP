@@ -26,8 +26,8 @@ function Register() {
       .then(async (response) => {
         if (!response.ok) {
           const data = await response.json();
-          setError(data.error || 'Error al registrar.');
-          throw new Error(data.error || 'Error al registrar.');
+          setError((data.error) || 'Error al registrar.');
+          throw new Error((data.error) || 'Error al registrar.');
         }
         return response.json();
       })
@@ -52,20 +52,20 @@ function Register() {
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
         <div>
           <input 
-            type="text" 
-            placeholder="Nombre" 
-            value={name} 
-            onChange={(e) => setName(e.target.value)} 
+            type="text"
+            placeholder="Nombre"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             required
             style={inputStyle}
           />
         </div>
         <div>
           <input 
-            type="text" 
-            placeholder="Apellido" 
-            value={lastName} 
-            onChange={(e) => setLastName(e.target.value)} 
+            type="text"
+            placeholder="Apellido"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
             required
             style={inputStyle}
           />
@@ -82,20 +82,20 @@ function Register() {
         </div>
         <div>
           <input 
-            type="password" 
-            placeholder="Contraseña" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
             style={inputStyle}
           />
         </div>
         <div>
           <input 
-            type="email" 
-            placeholder="Email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
             style={inputStyle}
           />

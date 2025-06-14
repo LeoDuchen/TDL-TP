@@ -1,0 +1,25 @@
+{
+  "name": "tdl-tp",
+  "version": "1.0.0",
+  "description": "El proyecto utiliza **Vite** para construir, correr y compilar el frontend.  \r La interfaz está desarrollada con **React** y el código está escrito en **TypeScript**, tanto en el frontend como en el backend.  \r El backend además está construido con **Node.js** y **Express**, y utiliza **SQLite** como base de datos.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install-all": "npm install --prefix frontend && npm install --prefix backend",
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeoDuchen/TDL-TP.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LeoDuchen/TDL-TP/issues"
+  },
+  "homepage": "https://github.com/LeoDuchen/TDL-TP#readme",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
