@@ -66,9 +66,6 @@ function Matches() {
   }, []);
 
   useEffect(() => {
-    //const storedMatches = JSON.parse(localStorage.getItem('matches') || '[]');
-    //setMatches(storedMatches);
-
     const storedPerPage = localStorage.getItem('matchesPerPage');
     if (storedPerPage) {
       setMatchesPerPage(Number(storedPerPage));
@@ -327,7 +324,17 @@ function Matches() {
       ))}
 
       <div style={{ marginTop: '10px' }}>
-        <select onChange={handleMatchesPerPageChange} value={matchesPerPage} style={inputStyle}>
+        <select 
+          onChange={handleMatchesPerPageChange}
+          value={matchesPerPage}
+          style={{
+            padding: '10px',
+            width: '160px',
+            marginTop: '10px',
+            marginBottom: '10px',
+            borderRadius: '5px',
+            textAlign: 'center',
+          }}>
           <option value={5}>Mostrar 5 partidos</option>
           <option value={10}>Mostrar 10 partidos</option>
           <option value={20}>Mostrar 20 partidos</option>
