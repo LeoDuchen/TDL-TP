@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 type Match = {
   id: number;
@@ -12,7 +13,13 @@ type Match = {
 };
 
 function Matches() {
-  const storedCurrentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  const storedCurrentUser = JSON.parse((localStorage.getItem('currentUser')) || ('null'));
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    localStorage.removeItem('currentUser');
+    navigate('/');
+  };
 
   const [users, setUsers] = useState<{ id: number; username: string; name: string }[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -213,6 +220,10 @@ function Matches() {
     <div style={{ backgroundColor: '#e3e4e5', minHeight: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
       <h1>Partidos Disponibles</h1>
 
+      <button style={{ ...inputStyle, position: 'fixed', top: '20px', right: '20px', backgroundColor: '#ffaaaa'}} onClick={handleLogout}>
+        Cerrar sesión
+      </button>
+
       <button style={{ ...inputStyle, marginBottom: '20px' }} onClick={() => setIsCreating(isCreating ? false : true)}>
         Crear partido
       </button>
@@ -343,19 +354,19 @@ function Matches() {
 
       <div style={{ display: 'flex', gap: '10px' }}>
         {currentPage > 1 && (
-          <button onClick={() => handlePageChange(currentPage - 1)} style={inputStyle}>
+          <button style={inputStyle} onClick={() => handlePageChange(currentPage - 1)}>
             Anterior
           </button>
         )}
 
         {Array.from({ length: totalPages }, (_, i) => (
-          <button key={i + 1} onClick={() => handlePageChange(i + 1)} style={{ ...inputStyle, backgroundColor: currentPage === i + 1 ? '#cccccc' : 'white', width: '40px' }}>
+          <button style={{ ...inputStyle, backgroundColor: currentPage === i + 1 ? '#cccccc' : 'white', width: '40px' }} key={i + 1} onClick={() => handlePageChange(i + 1)}>
             {i + 1}
           </button>
         ))}
 
         {(indexLastMatch < matches.length) && (
-          <button onClick={() => handlePageChange(currentPage + 1)} style={inputStyle}>
+          <button style={inputStyle} onClick={() => handlePageChange(currentPage + 1)}>
             Siguiente
           </button>
         )}

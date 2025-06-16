@@ -44,7 +44,11 @@ function Login() {
     navigate('/');
   };
 
-  const inputStyle = { width: '150px', padding: '10px', marginBottom: '10px' };
+  const inputStyle = { 
+    width: '150px',
+    padding: '10px',
+    marginBottom: '10px'
+  };
 
   return (
     <div style={{ backgroundColor: '#e3e4e5', minHeight: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
