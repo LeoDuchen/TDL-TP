@@ -26,8 +26,8 @@ function Register() {
       .then(async (response) => {
         if (!response.ok) {
           const data = await response.json();
-          setError((data.error) || 'Error al registrar.');
-          throw new Error((data.error) || 'Error al registrar.');
+          setError((data.error) || ('Error al registrar.'));
+          throw new Error((data.error) || ('Error al registrar.'));
         }
         return response.json();
       })
@@ -59,7 +59,7 @@ function Register() {
             type="text"
             placeholder="Nombre"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => { setName(e.target.value); setError(''); }}
             required
             style={inputStyle}
           />
@@ -69,7 +69,7 @@ function Register() {
             type="text"
             placeholder="Apellido"
             value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            onChange={(e) => { setLastName(e.target.value); setError(''); }}
             required
             style={inputStyle}
           />
@@ -79,7 +79,7 @@ function Register() {
             type="text"
             placeholder="Usuario"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => { setUsername(e.target.value); setError(''); }}
             required
             style={inputStyle}
           />
@@ -89,7 +89,7 @@ function Register() {
             type="password"
             placeholder="Contraseña"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => { setPassword(e.target.value); setError(''); }}
             required
             style={inputStyle}
           />
@@ -99,7 +99,7 @@ function Register() {
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => { setEmail(e.target.value); setError(''); }}
             required
             style={inputStyle}
           />
