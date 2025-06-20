@@ -191,12 +191,8 @@ app.post('/matches', async (req: Request, res: Response) => {
 
 app.post('/matches/:link/join', async (req: Request, res: Response) => {
   try {
-    const { userId } = req.body;
+    const { userId, name } = req.body;
     const { link } = req.params;
-
-    if (typeof userId !== 'number') {
-      return res.status(400).json({ error: 'El ID del usuario debe ser un número válido.' });
-    }
 
     const db = await dbPromise;
     const match = await db.get('SELECT * FROM matches WHERE link = ?', [link]);
@@ -207,20 +203,32 @@ app.post('/matches/:link/join', async (req: Request, res: Response) => {
 
     const players = JSON.parse(match.players || '[]') as { id: number | null, name: string }[];
 
-    const user = await db.get('SELECT name FROM users WHERE id = ?', [userId]);
-    if (!user) {
-      return res.status(404).json({ error: 'Usuario no encontrado.' });
-    }
-
-    if (players.some(p => p.id === userId)) {
-      return res.status(400).json({ error: 'Ya te anotaste en este partido.' });
-    }
-
     if (players.length >= match.maxPlayers) {
       return res.status(400).json({ error: 'El partido está lleno.' });
     }
 
-    players.push({ id: userId, name: user.name });
+    if (userId) {
+      if (typeof userId !== 'number') {
+        return res.status(400).json({ error: 'El ID del usuario debe ser un número válido.' });
+      }
+
+      const user = await db.get('SELECT name FROM users WHERE id = ?', [userId]);
+      if (!user) {
+        return res.status(404).json({ error: 'Usuario no encontrado.' });
+      }
+
+      if (players.some(p => p.id === userId)) {
+        return res.status(400).json({ error: 'Ya te anotaste en este partido.' });
+      }
+
+      players.push({ id: userId, name: user.name });
+    } else {
+      if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+        return res.status(400).json({ error: 'Ya hay alguien anotado con ese nombre.' });
+      }
+
+      players.push({ id: null, name: name });
+    }
 
     await db.run('UPDATE matches SET players = ? WHERE id = ?', [JSON.stringify(players), match.id]);
 

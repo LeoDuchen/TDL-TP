@@ -32,6 +32,9 @@ function MatchDetails() {
   const [copied, setCopied] = useState(false);
   const [copiedVisible, setCopiedVisible] = useState(false);
 
+  const [guestName, setGuestName] = useState<string>('');
+  const [isGuestJoining, setIsGuestJoining] = useState(false);
+
   useEffect(() => {
     if (!link) {
       return;
@@ -49,11 +52,12 @@ function MatchDetails() {
   }, [link]);
 
   function handleJoinMatch() {
-    if ((!match) || (!storedCurrentUser)) {
+    if (!match) {
       return;
     }
 
-    fetch(`http://localhost:3001/matches/${match.link}/join`, {
+    if (storedCurrentUser) {
+      fetch(`http://localhost:3001/matches/${match.link}/join`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -78,7 +82,48 @@ function MatchDetails() {
         setTimeout(() => setErrorVisible(false), 2000);
         setTimeout(() => setError(null), 2500);
       });
+    } else {
+      setIsGuestJoining(true);
+    }
   };
+
+  function handleGuestJoinMatch() {
+    if (!guestName.trim()) {
+      setError('Debes ingresar un nombre válido.');
+      setErrorVisible(true);
+      setTimeout(() => setErrorVisible(false), 2000);
+      setTimeout(() => setError(null), 2500);
+      return;
+    }
+
+    fetch(`http://localhost:3001/matches/${match?.link}/join`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name: guestName.trim() }),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error((errorData.error) || ('Error desconocido al unirse al partido.'));
+        }
+        return response.json();
+      })
+      .then(updatedMatch => {
+        setMatch(updatedMatch);
+        setError(null);
+        setIsGuestJoining(false);
+        setGuestName('');
+      })
+      .catch(error => {
+        console.error('Error al unirse al partido:', error.message);
+        setError(error.message);
+        setErrorVisible(true);
+        setTimeout(() => setErrorVisible(false), 2000);
+        setTimeout(() => setError(null), 2500);
+      });
+  }
 
   if (!match) {
     return (
@@ -114,14 +159,34 @@ function MatchDetails() {
         ))}
       </ul>
       <div style={{ marginTop: '15px' }}>
-        <button onClick={handleJoinMatch} style={{ marginRight: '10px', width: '90px' }}>
+        <button onClick={handleJoinMatch} style={{ marginRight: '10px', width: '100px' }}>
           Unirme
         </button>
         
-        <button onClick={() => navigate('/matches')} style= {{ width: '90px' }}>
+        <button onClick={() => navigate('/matches')} style= {{ width: '100px' }}>
           Volver
         </button>
       </div>
+
+      {isGuestJoining && (
+        <div style={{ marginTop: '10px' }}>
+          <input
+            type="text"
+            placeholder="Ingresa tu nombre"
+            value={guestName}
+            onChange={e => { setGuestName(e.target.value); setError(''); }}
+            style={{ padding: '10px', marginRight: '10px', width: '190px'}}
+          />
+
+          <button onClick={handleGuestJoinMatch} style={{ padding: '10px', width: '100px', marginRight: '10px' }}>
+            Confirmar
+          </button>
+
+          <button onClick={() => { setIsGuestJoining(false); setGuestName(''); }} style={{ padding: '10px', width: '100px' }}>
+            Cancelar
+          </button>
+        </div>
+      )}
 
       <div style={{ marginTop: '10px' }}>
         <button
@@ -136,7 +201,7 @@ function MatchDetails() {
               });
             }
           }}
-          style={{ width: '190px' }}
+          style={{ width: '210px' }}
         >
           Compartir
         </button>
