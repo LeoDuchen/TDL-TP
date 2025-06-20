@@ -238,7 +238,7 @@ function Matches() {
         </div>
       )}
 
-      {matches.length === 0 && <p>No hay partidos disponibles.</p>}
+      {(matches.length === 0) && (<p>No hay partidos disponibles.</p>)}
 
       <div
         style={{

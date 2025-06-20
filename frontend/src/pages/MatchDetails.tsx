@@ -82,7 +82,7 @@ function MatchDetails() {
     return (
       <div
         style={{
-           backgroundColor: '#e3e4e5',
+          backgroundColor: '#e3e4e5',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -99,14 +99,14 @@ function MatchDetails() {
   }
 
   return (
-    <div style={{ backgroundColor: '#e3e4e5', minHeight: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', padding: '20px' }}>
-      <h2>Detalle del Partido</h2>
+    <div style={{ backgroundColor: '#e3e4e5', minHeight: '100vh', width: '100vw', flexDirection: 'column', padding: '20px' }}>
+      <h2>Detalles del Partido</h2>
       <p><strong>Ubicación:</strong> {match.location}</p>
       <p><strong>Descripción:</strong> {match.description}</p>
       <p><strong>Fecha:</strong> {match.date}</p>
       <p><strong>Hora:</strong> {match.hour}</p>
       <p><strong>Jugadores:</strong> {match.players.length}/{match.maxPlayers}</p>
-      <ul>
+      <ul style={{ margin: '20px', padding: 0 }}>
         {match.players.map(pid => {
           const user = users.find(u => u.id === pid);
           return <li key={pid}>{(user?.name) || ('Jugador desconocido.')}</li>;
