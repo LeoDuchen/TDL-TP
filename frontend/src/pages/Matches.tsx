@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 type Match = {
   id: number;
@@ -20,8 +20,7 @@ function Matches() {
     localStorage.removeItem('currentUser');
     navigate('/');
   };
-
-  const [users, setUsers] = useState<{ id: number; username: string; name: string }[]>([]);
+  
   const [matches, setMatches] = useState<Match[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [newMatch, setNewMatch] = useState<Match>({
@@ -58,21 +57,6 @@ function Matches() {
   };
 
   useEffect(() => {
-    fetch('http://localhost:3001/users')
-      .then(res => res.json())
-      .then(usersData => {
-        setUsers(usersData);
-      })
-      .catch(error => {
-        console.error('Error al obtener los usuarios:', error.message);
-        setError(prev => ({
-          ...prev,
-          fetchUsers: (error.message) || ('Error desconocido al cargar los usuarios.')
-        }));
-      });
-  }, []);
-
-  useEffect(() => {
     const storedPerPage = localStorage.getItem('matchesPerPage');
     if (storedPerPage) {
       setMatchesPerPage(Number(storedPerPage));
@@ -99,7 +83,7 @@ function Matches() {
         },
         body: JSON.stringify(newMatch)
       })
-        .then(res => res.json())
+        .then(response => response.json())
         .then(createdMatch => {
           setMatches(prevMatches => [...prevMatches, createdMatch]);
           setNewMatch({
@@ -126,7 +110,7 @@ function Matches() {
 
   useEffect(() => {
     fetch('http://localhost:3001/matches')
-      .then(res => res.json())
+      .then(response => response.json())
       .then(matches => {
         console.log('Partidos desde el backend:', matches);
         setMatches(matches);
@@ -135,7 +119,7 @@ function Matches() {
         console.error('Error al obtener los partidos:', error.message);
         setError(prev => ({
           ...prev,
-          fetchMatches: (error.message) || ('Error desconocido al cargar los partidos.')
+          fetchMatches: (error.message) || ('Error desconocido al obtener los partidos.')
         }));
       });
   }, []);
@@ -147,58 +131,6 @@ function Matches() {
       [name]: name === "maxPlayers" ? Number(value) : value
     }));
   };
-
-  function handleJoinMatch(matchId: number) {
-    const match = matches.find(m => m.id === matchId);
-
-    if (!match) {
-      return;
-    }
-
-    const newError: { [matchId: number]: string } = {};
-
-    if (match.players.includes(storedCurrentUser.id)) {
-      newError[matchId] = 'Ya estás anotado en este partido.'; 
-      setError(newError);
-      return;
-    }
-
-    if (match.players.length >= match.maxPlayers) {
-      newError[matchId] = 'El partido está lleno.';
-      setError(newError);
-      return;
-    }
-
-    fetch(`http://localhost:3001/matches/${matchId}/join`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ userId: storedCurrentUser.id })
-    })
-      .then(res => {
-        if (!res.ok) {
-          return res.text().then(msg => { throw new Error(msg); });
-        }
-        return res.json();
-      })
-      .then(updatedMatch => {
-        const updatedMatches = matches.map(m => (m.id === matchId ? updatedMatch : m));
-        setMatches(updatedMatches);
-        setError(prev => {
-          const newErrors = { ...prev };
-          delete newErrors[matchId];
-          return newErrors;
-        });
-      })
-      .catch(error => {
-        console.error('Error al unire al partido:', error.message);
-        setError(prev => ({
-          ...prev,
-          joinMatch: (error.message) || ('Error desconocido al unirse al partido.')
-        }));
-      });
-  }
 
   const cardStyle = {
     backgroundColor: '#ffffff',
@@ -227,6 +159,12 @@ function Matches() {
       <button style={{ ...inputStyle, marginBottom: '20px' }} onClick={() => setIsCreating(isCreating ? false : true)}>
         Crear partido
       </button>
+
+      {Object.values(error).map((errorMessage, index) => (
+        <div key={index} style={{ color: 'red', marginTop: '10px' }}>
+          {errorMessage}
+        </div>
+      ))}
 
       {isCreating && (
         <div style={{ ...cardStyle, textAlign: 'center' }}>
@@ -302,37 +240,34 @@ function Matches() {
 
       {matches.length === 0 && <p>No hay partidos disponibles.</p>}
 
-      {currentMatches.map((match) => (
-        <div key={match.id} style={cardStyle}>
-          <p><strong>Publicado por:</strong> {users.find(u => u.id === Number(match.createdBy))?.name || 'Usuario desconocido'}</p>
-          <p><strong>Dirección:</strong> {match.location}</p>
-          <p><strong>Descripción:</strong> {match.description}</p>
-          <p><strong>Fecha:</strong> {match.date}</p>
-          <p><strong>Hora:</strong> {match.hour}</p>
-          <p><strong>Jugadores:</strong> {match.players.length} / {match.maxPlayers}</p>
-          <div style={{ textAlign: 'left'}}>
-            <strong>Anotados:</strong>
-            <ul style={{ paddingLeft: '15px', margin: '5px' }}>
-              {match.players.map((playerId) => {
-                const user = users.find(u => u.id === Number(playerId));
-                return (
-                  <li key={playerId}>
-                    {user ? user.name : 'Jugador desconocido.'}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-          <button style={{ ...inputStyle, backgroundColor: '#efefef' }} onClick={() => handleJoinMatch(match.id)}>
-            Unirme
-          </button>
-          {error[match.id] && (
-            <div style={{ color: 'red', marginTop: '5px' }}>
-              {error[match.id]}
-            </div>
-          )}
-        </div>
-      ))}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: '20px',
+          maxWidth: '960px',
+        }}
+      >
+        {currentMatches.map((match) => (
+          <Link
+            key={match.id}
+            to={`/matches/${match.id}`}
+            style={{
+              ...cardStyle,
+              width: '280px',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              color: 'inherit',
+              boxSizing: 'border-box',
+            }}
+          >
+            <p><strong>Ubicación:</strong> {match.location}</p>
+            <p><strong>Fecha:</strong> {match.date}</p>
+            <p><strong>Jugadores:</strong> {match.players.length}/{match.maxPlayers}</p>
+          </Link>
+        ))}
+      </div>
 
       <div style={{ marginTop: '10px' }}>
         <select 
@@ -345,10 +280,11 @@ function Matches() {
             marginBottom: '10px',
             borderRadius: '5px',
             textAlign: 'center',
-          }}>
-          <option value={5}>Mostrar 5 partidos</option>
-          <option value={10}>Mostrar 10 partidos</option>
-          <option value={20}>Mostrar 20 partidos</option>
+          }}
+        >
+          <option value={6}>Mostrar 6 partidos</option>
+          <option value={12}>Mostrar 12 partidos</option>
+          <option value={24}>Mostrar 24 partidos</option>
         </select>
       </div>
 

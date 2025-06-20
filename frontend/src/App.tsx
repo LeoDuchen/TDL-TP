@@ -3,6 +3,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Matches from './pages/Matches';
+import MatchDetails from './pages/MatchDetails';
 import { PublicRoute, PrivateRoute } from './components/Routes';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
         <Route path="/login" element={<PublicRoute><Login/></PublicRoute>}/>
         <Route path="/register" element={<PublicRoute><Register/></PublicRoute>}/>
         <Route path="/matches" element={<PrivateRoute><Matches/></PrivateRoute>}/>
+        <Route path="/matches/:id" element={<PrivateRoute><MatchDetails/></PrivateRoute>} />
       </Routes>
     </Router>
   );

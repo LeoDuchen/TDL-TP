@@ -134,6 +134,32 @@ app.get('/matches', async (req: Request, res: Response) => {
   }
 });
 
+app.get('/matches/:id', async (req: Request, res: Response) => {
+  try {
+    const matchId = parseInt(req.params.id);
+
+    if (isNaN(matchId)) {
+      return res.status(400).json({ error: 'ID del partido inválido.' });
+    }
+
+    const db = await dbPromise;
+    const match = await db.get('SELECT * FROM matches WHERE id = ?', [matchId]);
+
+    if (!match) {
+      return res.status(404).json({ error: 'Partido no encontrado.' });
+    }
+
+    const matchWithParsedPlayers = {
+      ...match,
+      players: JSON.parse((match.players) || ('[]'))
+    };
+
+    res.json(matchWithParsedPlayers);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener el partido.' });
+  }
+});
+
 app.post('/matches', async (req: Request, res: Response) => {
   try {
     const { createdBy, location, description, date, hour, maxPlayers } = req.body;
@@ -187,7 +213,7 @@ app.post('/matches/:id/join', async (req: Request, res: Response) => {
     const players = JSON.parse(match.players || '[]') as number[];
 
     if (players.includes(userId)) {
-      return res.status(400).json({ error: 'Ya estás anotado en este partido.' });
+      return res.status(400).json({ error: 'Ya te anotaste en este partido.' });
     }
 
     if (players.length >= match.maxPlayers) {

@@ -20,7 +20,9 @@ function Register() {
 
     fetch('http://localhost:3001/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ name, lastName, username, password, email }),
     })
       .then(async (response) => {
