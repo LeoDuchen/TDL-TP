@@ -121,7 +121,7 @@ function Register() {
       </form>
 
       {error && (
-        <div style={{ color: 'red', marginTop: '10px' }}>
+        <div style={{ color: 'red', fontWeight: 'bold', marginTop: '10px' }}>
           {error}
         </div>
       )}

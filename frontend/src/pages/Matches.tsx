@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
+type Player = {
+  id: number | null;
+  name: string;
+};
+
 type Match = {
   id: number;
   createdBy: number;
@@ -8,8 +13,9 @@ type Match = {
   description: string;
   date: string;
   hour: string;
-  players: number[];
+  players: Player[];
   maxPlayers: number;
+  link: string;
 };
 
 function Matches() {
@@ -30,8 +36,9 @@ function Matches() {
     description: '',
     date: '',
     hour: '',
-    players: [storedCurrentUser.id],
-    maxPlayers: 10
+    players: [{ id: storedCurrentUser.id, name: storedCurrentUser.name }],
+    maxPlayers: 10,
+    link: ''
   });
 
   const [error, setError] = useState<{ [matchId: number]: string }>({});
@@ -93,8 +100,9 @@ function Matches() {
             description: '',
             date: '',
             hour: '',
-            players: [storedCurrentUser.id],
-            maxPlayers: 10
+            players: [{ id: storedCurrentUser.id, name: storedCurrentUser.name }],
+            maxPlayers: 10,
+            link: ''
           });
           setIsCreating(false);
         })
@@ -161,7 +169,7 @@ function Matches() {
       </button>
 
       {Object.values(error).map((errorMessage, index) => (
-        <div key={index} style={{ color: 'red', marginTop: '10px' }}>
+        <div key={index} style={{ color: 'red', fontWeight: 'bold', marginTop: '10px' }}>
           {errorMessage}
         </div>
       ))}
@@ -252,7 +260,7 @@ function Matches() {
         {currentMatches.map((match) => (
           <Link
             key={match.id}
-            to={`/matches/${match.id}`}
+            to={`/matches/${match.link}`}
             style={{
               ...cardStyle,
               width: '280px',

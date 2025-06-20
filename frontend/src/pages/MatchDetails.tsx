@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
+type Player = {
+  id: number | null;
+  name: string;
+};
+
 type Match = {
   id: number;
   createdBy: number;
@@ -8,32 +13,31 @@ type Match = {
   description: string;
   date: string;
   hour: string;
-  players: number[];
+  players: Player[];
   maxPlayers: number;
-};
-
-type User = {
-  id: number;
-  username: string;
-  name: string;
+  link: string
 };
 
 function MatchDetails() {
   const storedCurrentUser = JSON.parse((localStorage.getItem('currentUser')) || ('null'));
 
-  const { id } = useParams<{ id: string }>();
+  const { link } = useParams<{ link: string }>();
   const navigate = useNavigate();
 
   const [match, setMatch] = useState<Match | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
+
   const [error, setError] = useState<string | null>(null);
+  const [errorVisible, setErrorVisible] = useState(false);
+
+  const [copied, setCopied] = useState(false);
+  const [copiedVisible, setCopiedVisible] = useState(false);
 
   useEffect(() => {
-    if (!id) {
+    if (!link) {
       return;
     }
 
-    fetch(`http://localhost:3001/matches/${id}`)
+    fetch(`http://localhost:3001/matches/${link}`)
       .then(response => {
         if (!response.ok) {
           throw new Error('Error al obtener el partido.');
@@ -42,19 +46,14 @@ function MatchDetails() {
       })
       .then(setMatch)
       .catch(() => setError('Error desconocido al obtener el partido.'));
-
-    fetch('http://localhost:3001/users')
-      .then(response => response.json())
-      .then(setUsers)
-      .catch(() => setError('Error desconocido al obtener los usuarios.'));
-  }, [id]);
+  }, [link]);
 
   function handleJoinMatch() {
     if ((!match) || (!storedCurrentUser)) {
       return;
     }
 
-    fetch(`http://localhost:3001/matches/${match.id}/join`, {
+    fetch(`http://localhost:3001/matches/${match.link}/join`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -75,6 +74,9 @@ function MatchDetails() {
       .catch(error => {
         console.error('Error al unirse al partido:', error.message);
         setError(error.message);
+        setErrorVisible(true);
+        setTimeout(() => setErrorVisible(false), 2000);
+        setTimeout(() => setError(null), 2500);
       });
   };
 
@@ -107,22 +109,63 @@ function MatchDetails() {
       <p><strong>Hora:</strong> {match.hour}</p>
       <p><strong>Jugadores:</strong> {match.players.length}/{match.maxPlayers}</p>
       <ul style={{ margin: '20px', padding: 0 }}>
-        {match.players.map(pid => {
-          const user = users.find(u => u.id === pid);
-          return <li key={pid}>{(user?.name) || ('Jugador desconocido.')}</li>;
-        })}
+        {match.players.map((player, index) => (
+          <li key={index}>{player.name}</li>
+        ))}
       </ul>
       <div style={{ marginTop: '15px' }}>
-        <button onClick={handleJoinMatch} style={{ marginRight: '10px' }}>
+        <button onClick={handleJoinMatch} style={{ marginRight: '10px', width: '90px' }}>
           Unirme
         </button>
-        <button onClick={() => navigate(-1)}>
+        
+        <button onClick={() => navigate('/matches')} style= {{ width: '90px' }}>
           Volver
         </button>
       </div>
 
+      <div style={{ marginTop: '10px' }}>
+        <button
+          onClick={() => {
+            if (match) {
+              const url = `${window.location.origin}/matches/${match.link}`;
+              navigator.clipboard.writeText(url).then(() => {
+                setCopied(true);
+                setCopiedVisible(true);
+                setTimeout(() => setCopiedVisible(false), 2000);
+                setTimeout(() => setCopied(false), 2500);
+              });
+            }
+          }}
+          style={{ width: '190px' }}
+        >
+          Compartir
+        </button>
+
+        {copied && (
+          <div
+            style={{
+              color: 'green',
+              fontWeight: 'bold',
+              marginTop: '10px',
+              opacity: copiedVisible ? 1 : 0,
+              transition: 'opacity 0.5s ease-in-out'
+            }}
+          >
+            ¡Link del partido copiado!
+          </div>
+        )}
+      </div>
+
       {error && (
-        <div style={{ color: 'red', marginTop: '10px' }}>
+        <div
+          style={{
+            color: 'red',
+            fontWeight: 'bold',
+            marginTop: '10px',
+            opacity: errorVisible ? 1 : 0,
+            transition: 'opacity 0.5s ease-in-out'
+          }}
+        >
           {error}
         </div>
       )}

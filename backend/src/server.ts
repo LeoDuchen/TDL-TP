@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
+import crypto from 'crypto';
 
 const app = express();
 const port = 3001;
@@ -25,6 +26,7 @@ dbPromise.then(async (db) => {
     hour TEXT,
     players TEXT,
     maxPlayers INTEGER,
+    link TEXT UNIQUE,
     FOREIGN KEY (createdBy) REFERENCES users(id)
   )`);
 
@@ -108,16 +110,6 @@ app.post('/register', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/users', async (req, res) => {
-  try {
-    const db = await dbPromise;
-    const users = await db.all('SELECT id, name, username FROM users');
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener los usuarios.' });
-  }
-});
-
 app.get('/matches', async (req: Request, res: Response) => {
   try {
     const db = await dbPromise;
@@ -134,16 +126,11 @@ app.get('/matches', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/matches/:id', async (req: Request, res: Response) => {
+app.get('/matches/:link', async (req: Request, res: Response) => {
   try {
-    const matchId = parseInt(req.params.id);
-
-    if (isNaN(matchId)) {
-      return res.status(400).json({ error: 'ID del partido inválido.' });
-    }
-
+    const { link } = req.params;
     const db = await dbPromise;
-    const match = await db.get('SELECT * FROM matches WHERE id = ?', [matchId]);
+    const match = await db.get('SELECT * FROM matches WHERE link = ?', [link]);
 
     if (!match) {
       return res.status(404).json({ error: 'Partido no encontrado.' });
@@ -168,12 +155,20 @@ app.post('/matches', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Falta completar todos los campos.' });
     }
     
-    const players = [createdBy];
     const db = await dbPromise;
+    const user = await db.get('SELECT name FROM users WHERE id = ?', [createdBy]);
+    const players = [{ id: createdBy, name: (user?.name) || ('Usuario') }];
+
+    let link;
+    let linkExists;
+    do {
+      link = crypto.randomBytes(6).toString('hex');
+      linkExists = await db.get('SELECT * FROM matches WHERE link = ?', [link]);
+    } while (linkExists);
 
     const result = await db.run(
-      `INSERT INTO matches (createdBy, location, description, date, hour, players, maxPlayers) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [createdBy, location, description, date, hour, JSON.stringify(players), maxPlayers]
+      `INSERT INTO matches (createdBy, location, description, date, hour, players, maxPlayers, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [createdBy, location, description, date, hour, JSON.stringify(players), maxPlayers, link]
     );
 
     const newMatch = {
@@ -183,8 +178,9 @@ app.post('/matches', async (req: Request, res: Response) => {
       description,
       date,
       hour,
-      players: players || [],
-      maxPlayers
+      players: (players) || ([]),
+      maxPlayers,
+      link
     };
 
     res.status(201).json(newMatch);
@@ -193,26 +189,30 @@ app.post('/matches', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/matches/:id/join', async (req: Request, res: Response) => {
+app.post('/matches/:link/join', async (req: Request, res: Response) => {
   try {
-    const matchId = parseInt(req.params.id);
     const { userId } = req.body;
+    const { link } = req.params;
 
     if (typeof userId !== 'number') {
       return res.status(400).json({ error: 'El ID del usuario debe ser un número válido.' });
     }
 
     const db = await dbPromise;
-
-    const match = await db.get('SELECT * FROM matches WHERE id = ?', [matchId]);
+    const match = await db.get('SELECT * FROM matches WHERE link = ?', [link]);
 
     if (!match) {
       return res.status(404).json({ error: 'Partido no encontrado.' });
     }
 
-    const players = JSON.parse(match.players || '[]') as number[];
+    const players = JSON.parse(match.players || '[]') as { id: number | null, name: string }[];
 
-    if (players.includes(userId)) {
+    const user = await db.get('SELECT name FROM users WHERE id = ?', [userId]);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    if (players.some(p => p.id === userId)) {
       return res.status(400).json({ error: 'Ya te anotaste en este partido.' });
     }
 
@@ -220,9 +220,9 @@ app.post('/matches/:id/join', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'El partido está lleno.' });
     }
 
-    players.push(userId);
+    players.push({ id: userId, name: user.name });
 
-    await db.run('UPDATE matches SET players = ? WHERE id = ?', [JSON.stringify(players), matchId]);
+    await db.run('UPDATE matches SET players = ? WHERE id = ?', [JSON.stringify(players), match.id]);
 
     return res.status(200).json({ ...match, players })
   } catch (error) {

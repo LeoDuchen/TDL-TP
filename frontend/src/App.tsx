@@ -14,7 +14,7 @@ function App() {
         <Route path="/login" element={<PublicRoute><Login/></PublicRoute>}/>
         <Route path="/register" element={<PublicRoute><Register/></PublicRoute>}/>
         <Route path="/matches" element={<PrivateRoute><Matches/></PrivateRoute>}/>
-        <Route path="/matches/:id" element={<PrivateRoute><MatchDetails/></PrivateRoute>} />
+        <Route path="/matches/:link" element={<MatchDetails/>}/>
       </Routes>
     </Router>
   );
