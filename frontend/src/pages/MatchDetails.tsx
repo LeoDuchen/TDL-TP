@@ -148,7 +148,7 @@ function MatchDetails() {
   return (
     <div style={{ backgroundColor: '#e3e4e5', minHeight: '100vh', width: '100vw', flexDirection: 'column', padding: '20px' }}>
       <h2>Detalles del Partido</h2>
-      <p><strong>Ubicación:</strong> {match.location}</p>
+      <p><strong>Dirección:</strong> {match.location}</p>
       <p><strong>Descripción:</strong> {match.description}</p>
       <p><strong>Fecha:</strong> {match.date}</p>
       <p><strong>Hora:</strong> {match.hour}</p>

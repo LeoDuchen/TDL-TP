@@ -18,6 +18,24 @@ type Match = {
   link: string;
 };
 
+async function validateLocation(location: string): Promise<boolean> {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json`;
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'TDL-TP/1.0 (https://github.com/LeoDuchen)'
+      }
+    });
+
+    const data = await response.json();
+    return data.length > 0;
+  } catch (error) {
+    console.error("Error validando la dirección:", error);
+    return false;
+  }
+}
+
 function Matches() {
   const storedCurrentUser = JSON.parse((localStorage.getItem('currentUser')) || ('null'));
   const navigate = useNavigate();
@@ -79,10 +97,20 @@ function Matches() {
     window.scrollTo({ top: 0 });
   }, [currentPage]);
 
-  function handleCreateMatch(e: React.FormEvent) {
+  async function handleCreateMatch(e: React.FormEvent) {
     e.preventDefault();
 
     if ((newMatch.location) && (newMatch.date) && (newMatch.hour)) {
+      const validLocation = await validateLocation(newMatch.location);
+
+      if (!validLocation) {
+        setError(prev => ({
+          ...prev,
+          createMatch: 'La dirección ingresada no es válida o no fue encontrada.'
+        }));
+        return;
+      }
+
       fetch('http://localhost:3001/matches', {
         method: 'POST',
         headers: {
@@ -134,6 +162,15 @@ function Matches() {
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
+    
+    if (name === 'location') {
+      setError(prev => {
+        const newError = { ...prev };
+        delete (newError as any)['createMatch'];
+        return newError;
+      });
+    }
+
     setNewMatch((prev) => ({
       ...prev,
       [name]: name === "maxPlayers" ? Number(value) : value
@@ -270,7 +307,7 @@ function Matches() {
               boxSizing: 'border-box',
             }}
           >
-            <p><strong>Ubicación:</strong> {match.location}</p>
+            <p><strong>Dirección:</strong> {match.location}</p>
             <p><strong>Fecha:</strong> {match.date}</p>
             <p><strong>Jugadores:</strong> {match.players.length}/{match.maxPlayers}</p>
           </Link>
