@@ -35,6 +35,8 @@ function MatchDetails() {
   const [guestName, setGuestName] = useState<string>('');
   const [isGuestJoining, setIsGuestJoining] = useState(false);
 
+  const [coordinates, setCoordinates] = useState<{ lat: string, lon: string } | null>(null);
+
   useEffect(() => {
     if (!link) {
       return;
@@ -50,6 +52,21 @@ function MatchDetails() {
       .then(setMatch)
       .catch(() => setError('Error desconocido al obtener el partido.'));
   }, [link]);
+
+  useEffect(() => {
+    if (!match?.location) {
+      return;
+    }
+
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(match.location)}`)
+      .then(res => res.json())
+      .then(data => {
+        if ((data) && (data.length > 0)) {
+          setCoordinates({ lat: data[0].lat, lon: data[0].lon });
+        }
+      })
+      .catch(error => console.error('Error localizando la dirección:', error));
+  }, [match?.location]);
 
   function handleJoinMatch() {
     if (!match) {
@@ -158,7 +175,46 @@ function MatchDetails() {
           <li key={index}>{player.name}</li>
         ))}
       </ul>
-      <div style={{ marginTop: '15px' }}>
+
+      {coordinates && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            width: '400px',
+            height: '430px',
+            borderRadius: '10px',
+            boxShadow: '0px 2px 5px rgba(0,0,0,0.2)',
+            zIndex: 1000,
+            backgroundColor: '#f9f9f9',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          <iframe
+            width="100%"
+            height="400px"
+            frameBorder="0"
+            scrolling="no"
+            src={`https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(coordinates.lon) - 0.003}%2C${parseFloat(coordinates.lat) - 0.003}%2C${parseFloat(coordinates.lon) + 0.003}%2C${parseFloat(coordinates.lat) + 0.003}&layer=mapnik&marker=${coordinates.lat}%2C${coordinates.lon}`}
+            style={{ borderRadius: '10px 10px 0 0' }}
+          />
+          <a
+            href={`https://www.openstreetmap.org/?mlat=${coordinates.lat}&mlon=${coordinates.lon}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              textAlign: 'center'
+            }}
+          >
+            Ver en OpenStreetMap
+          </a>
+        </div>
+      )}
+
+      <div>
         <button onClick={handleJoinMatch} style={{ marginRight: '10px', width: '100px' }}>
           Unirme
         </button>
