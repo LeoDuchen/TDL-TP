@@ -24,7 +24,7 @@ async function validateLocation(location: string): Promise<boolean> {
   try {
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'TDL-TP/1.0 (https://github.com/LeoDuchen)'
+        'User-Agent': 'TDL-TP/1.0 (https://github.com/LeoDuchen/TDL-TP)'
       }
     });
 
