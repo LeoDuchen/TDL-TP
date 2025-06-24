@@ -1,4 +1,11 @@
-# TDL-TP
+# Teoría de Lenguajes de Programación
+
+## Integrantes
+
+- [Leonardo Duchen](https://github.com/LeoDuchen)
+- [Gianfranco Turco](https://github.com/GianfrancoTurco)
+
+## Trabajo Práctico
 
 El proyecto utiliza **Vite** para construir, correr y compilar el frontend.  
 La interfaz está desarrollada con **React** y el código está escrito en **TypeScript**, tanto en el frontend como en el backend.  
