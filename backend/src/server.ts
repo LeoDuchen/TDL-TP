@@ -238,6 +238,34 @@ app.post('/matches/:link/join', async (req: Request, res: Response) => {
   }
 });
 
+app.post('/matches/:link/remove', async (req: Request, res: Response) => {
+  try {
+    const { userId, guestName } = req.body;
+    const { link } = req.params;
+
+    const db = await dbPromise;
+    const match = await db.get('SELECT * FROM matches WHERE link = ?', [link]);
+
+    if (!match) {
+      return res.status(404).json({ error: 'Partido no encontrado.' });
+    }
+
+    let players = JSON.parse(match.players || '[]') as { id: number | null, name: string }[];
+
+    if (userId) {
+      players = players.filter(p => p.id !== userId);
+    } else {
+      players = players.filter(p => !((p.id === null) && (p.name.toLowerCase() === guestName.toLowerCase())));
+    }
+
+    await db.run('UPDATE matches SET players = ? WHERE id = ?', [JSON.stringify(players), match.id]);
+
+    return res.status(200).json({ ...match, players })
+  } catch (error) {
+    res.status(500).json({ error: 'Error al eliminar el jugador.' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
 });

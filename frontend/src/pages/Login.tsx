@@ -89,7 +89,7 @@ function Login() {
         </div>
       </form>
       
-      {error && (
+      {(error) && (
         <div style={{ color: 'red', fontWeight: 'bold', marginTop: '10px' }}>
           {error}
         </div>

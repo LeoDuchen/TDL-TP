@@ -105,6 +105,10 @@ function MatchDetails() {
   };
 
   function handleGuestJoinMatch() {
+    if (!match) {
+      return;
+    }
+
     if (!guestName.trim()) {
       setError('Debes ingresar un nombre válido.');
       setErrorVisible(true);
@@ -142,6 +146,38 @@ function MatchDetails() {
       });
   }
 
+  function handleRemovePlayer(player: { id: number | null; name: string }) {
+    if (!match) {
+      return;
+    }
+
+    fetch(`http://localhost:3001/matches/${match.link}/remove`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(player.id !== null ? { userId: player.id } : { guestName: player.name }),
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error((errorData.error) || ('Error al eliminar el jugador.'));
+        }
+        return response.json();
+      })
+      .then(updatedMatch => {
+        setMatch(updatedMatch);
+        setError(null);
+      })
+      .catch(error => {
+        console.error('Error al eliminar el jugador:', error.message);
+        setError(error.message);
+        setErrorVisible(true);
+        setTimeout(() => setErrorVisible(false), 2000);
+        setTimeout(() => setError(null), 2500);
+      });
+  }
+
   if (!match) {
     return (
       <div
@@ -170,13 +206,29 @@ function MatchDetails() {
       <p><strong>Fecha:</strong> {match.date}</p>
       <p><strong>Hora:</strong> {match.hour}</p>
       <p><strong>Jugadores:</strong> {match.players.length}/{match.maxPlayers}</p>
-      <ul style={{ margin: '20px', padding: 0 }}>
+      <ul style={{ paddingLeft: '20px' }}>
         {match.players.map((player, index) => (
-          <li key={index}>{player.name}</li>
+          <li key={index} style={{ marginBottom: '8px' }}>
+            <span style={{ marginRight: '10px' }}>{player.name}</span>
+            {(storedCurrentUser?.id === match.createdBy) && (
+              <button
+                style={{
+                  cursor: 'pointer',
+                  backgroundColor: '#ffaaaa',
+                  border: 'none',
+                  borderRadius: '5px',
+                  padding: '1px 6px',
+                }}
+                onClick={() => handleRemovePlayer(player)}
+              >
+                Eliminar
+              </button>
+            )}
+          </li>
         ))}
       </ul>
 
-      {coordinates && (
+      {(coordinates) && (
         <div
           style={{
             position: 'fixed',
@@ -224,7 +276,7 @@ function MatchDetails() {
         </button>
       </div>
 
-      {isGuestJoining && (
+      {(isGuestJoining) && (
         <div style={{ marginTop: '10px' }}>
           <input
             type="text"
@@ -262,7 +314,7 @@ function MatchDetails() {
           Compartir
         </button>
 
-        {copied && (
+        {(copied) && (
           <div
             style={{
               color: 'green',
@@ -277,7 +329,7 @@ function MatchDetails() {
         )}
       </div>
 
-      {error && (
+      {(error) && (
         <div
           style={{
             color: 'red',

@@ -211,7 +211,7 @@ function Matches() {
         </div>
       ))}
 
-      {isCreating && (
+      {(isCreating) && (
         <div style={{ ...cardStyle, textAlign: 'center' }}>
           <h2>Crear Partido</h2>
           <form onSubmit={handleCreateMatch}>
@@ -334,7 +334,7 @@ function Matches() {
       </div>
 
       <div style={{ display: 'flex', gap: '10px' }}>
-        {currentPage > 1 && (
+        {(currentPage) > 1 && (
           <button style={inputStyle} onClick={() => handlePageChange(currentPage - 1)}>
             Anterior
           </button>
