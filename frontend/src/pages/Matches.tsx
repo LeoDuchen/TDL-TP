@@ -62,7 +62,7 @@ function Matches() {
   const [error, setError] = useState<{ [matchId: number]: string }>({});
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [matchesPerPage, setMatchesPerPage] = useState(5);
+  const [matchesPerPage, setMatchesPerPage] = useState(6);
 
   const indexLastMatch = currentPage * matchesPerPage;
   const indexFirstMatch = indexLastMatch - matchesPerPage;
